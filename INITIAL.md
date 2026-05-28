@@ -1,112 +1,75 @@
-# Feature 1: Coach Authentication (Backend Only)
+# Feature 1 Frontend: Auth (Login & Protected Routes)
 
 ## What to build
 
-JWT-based authentication for coaches. Register and login endpoints. A security filter that protects all routes except auth endpoints. A mechanism to inject the current authenticated user into any controller method.
+Login page, auth state management, and route protection. After this, unauthenticated users see only the login page. Authenticated users see the app shell with navigation.
 
-This is backend only. No frontend work.
+This is frontend only. Backend auth endpoints already exist.
 
 ## Context
 
-Read `CLAUDE.md` before writing any code — it defines the schema, tech stack, and code standards.
+Read `CLAUDE.md` before writing any code.
 
-Feature 0 is complete. The project has:
-- Spring Boot 3.x running with Java 21
-- MySQL 8 via Docker Compose
-- Flyway migrations enabled (V1__baseline.sql exists)
-- SecurityConfig currently permits all requests
-- GlobalExceptionHandler with consistent error format
-- BaseEntity with `id` and `createdAt`
-- CORS configured for localhost:5173
+Backend endpoints available:
+- `POST /api/auth/register` → `{ token, user: { id, email, name } }`
+- `POST /api/auth/login` → `{ token, user: { id, email, name } }`
+- All other routes return 401 without a valid JWT
 
-## Endpoints
-
-### POST /api/auth/register
-
-Request body:
-```json
-{
-  "email": "coach@example.com",
-  "password": "minimum8chars",
-  "name": "Coach Name"
-}
-```
-
-Response (201):
-```json
-{
-  "token": "jwt-string",
-  "user": { "id": 1, "email": "coach@example.com", "name": "Coach Name" }
-}
-```
-
-Validation: email must be valid format, email must be unique (409 if duplicate), password minimum 8 characters, name not blank.
-
-### POST /api/auth/login
-
-Request body:
-```json
-{
-  "email": "coach@example.com",
-  "password": "minimum8chars"
-}
-```
-
-Response (200): same shape as register response.
-
-On bad credentials return 401 with `{ "error": "Invalid email or password" }`. Do not reveal whether email exists or password is wrong — same message for both.
+Frontend scaffolding from Feature 0 exists: Vite + React + TypeScript, Tailwind, TanStack Query, React Router, axios client with JWT interceptor in `src/api/client.ts`.
 
 ## Files to create
 
-### Migration
-- `V2__create_users_table.sql` — Users table: `id` BIGINT AUTO_INCREMENT, `email` VARCHAR(255) UNIQUE NOT NULL, `password_hash` VARCHAR(255) NOT NULL, `name` VARCHAR(100) NOT NULL, `role` VARCHAR(20) NOT NULL DEFAULT 'COACH', `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP.
+### Auth state (`src/hooks/useAuth.tsx`)
+- AuthContext + AuthProvider wrapping the app
+- State: `user` (null or `{ id, email, name }`), `token`, `isAuthenticated`, `isLoading`
+- `login(email, password)` — calls `/api/auth/login`, stores token in localStorage, sets user
+- `logout()` — clears token and user, redirects to `/login`
+- On mount: check localStorage for existing token. If found, decode the user info from it or validate against the API. Set `isLoading` true until resolved.
+- Export `useAuth()` hook
 
-### Entity
-- `User.java` — extends BaseEntity. Fields map to the table. Role is an enum (`COACH`). Password hash is never serialized to JSON (`@JsonIgnore`).
+### API functions (`src/api/auth.ts`)
+- `loginRequest(email, password)` — POST to `/api/auth/login`, returns response data
+- `registerRequest(email, password, name)` — POST to `/api/auth/register`, returns response data
+- Typed request/response interfaces
 
-### Auth package (`com.crick.auth`)
-- `AuthController.java` — the two endpoints above. Uses `AuthService`.
-- `AuthService.java` — handles registration (hash password, save user, generate token) and login (find by email, verify password, generate token).
-- `RegisterRequest.java` — DTO with Jakarta validation annotations.
-- `LoginRequest.java` — DTO with Jakarta validation annotations.
-- `AuthResponse.java` — DTO with token and user info (record or class, either works).
+### Login page (`src/pages/LoginPage.tsx`)
+- Email + password form
+- Submit calls `login()` from useAuth
+- Show error message on failed login
+- Redirect to `/` on success
+- Clean, centered layout. Nothing fancy — a card with form fields.
+- No register form — registration is dev/seed only per CLAUDE.md
 
-### Security package (`com.crick.config`)
-- `JwtService.java` — generate token (claims: userId, email; expiry: 24h), parse/validate token, extract userId from token. Use `io.jsonwebtoken` (jjwt). Signing key from `JWT_SECRET` env var.
-- `JwtAuthenticationFilter.java` — extends `OncePerRequestFilter`. Reads `Authorization: Bearer <token>` header. If valid, sets authentication in SecurityContext. If missing or invalid, does nothing (let Spring Security handle the 401).
-- Update `SecurityConfig.java` — add the JWT filter before `UsernamePasswordAuthenticationFilter`. Permit `/api/auth/**` and `/actuator/health`. Require authentication for everything else. Keep CSRF disabled, stateless sessions.
+### Protected route wrapper (`src/components/ProtectedRoute.tsx`)
+- Wraps routes that require auth
+- If `isLoading`, show a simple spinner
+- If not authenticated, redirect to `/login`
+- If authenticated, render children
 
-### User resolution
-- `CurrentUser.java` — custom annotation (`@Target(PARAMETER)`, `@Retention(RUNTIME)`).
-- `CurrentUserArgumentResolver.java` — implements `HandlerMethodArgumentResolver`. Reads userId from SecurityContext, loads User from repository, injects into controller parameter. Returns 401 if user not found.
-- Register the resolver in a `WebMvcConfig.java`.
+### Update `src/App.tsx`
+- Wrap everything in `AuthProvider`
+- `/login` route renders LoginPage (public)
+- All other routes wrapped in ProtectedRoute
+- `/parent/:token` stays outside ProtectedRoute (it uses magic links, not JWT)
 
-### Repository
-- `UserRepository.java` — extends JpaRepository. Methods: `findByEmail(String email)`, `existsByEmail(String email)`.
+### Update `src/layouts/AppLayout.tsx`
+- Show coach name somewhere in the nav/header
+- Add a logout button that calls `logout()` from useAuth
+
+### Update `src/api/client.ts`
+- Make sure the axios interceptor reads the token from localStorage
+- On 401 response, clear token and redirect to `/login`
 
 ## Constraints
 
-- Password hashing with BCrypt via Spring Security's `PasswordEncoder` bean.
-- JWT secret must come from environment variable, not hardcoded. In `application.yml` default to a dev-only value so local development works without setting env vars.
-- Do not create a `/api/auth/me` endpoint — not needed for v1.
-- Do not add role-based access control beyond checking that a valid JWT exists. There is only one role (COACH) in v1.
-- Do not create any user seeding or admin endpoints. Seeding comes in Feature 9.
-- No Javadoc. No comments explaining obvious code. Only comment `why`, never `what`.
-- No unused imports. No placeholder TODOs.
-- Keep files short — if any file exceeds 80 lines, reconsider.
+- No register page. Coach accounts are seeded or created via API directly.
+- Token in localStorage is acceptable for portfolio scope. Do not overcomplicate with httpOnly cookies.
+- Do not build any player-related UI — that's Feature 2 frontend.
+- Keep styling minimal and clean. Functional, not decorative.
+- No Javadoc-style comments. No TODOs.
 
-## How to verify
+## Verify
 
-After implementation, these must all pass:
-
-1. `POST /api/auth/register` with valid data → 201, returns JWT and user object
-2. `POST /api/auth/register` with duplicate email → 409, error message
-3. `POST /api/auth/register` with missing/invalid fields → 400, validation errors in details
-4. `POST /api/auth/login` with correct credentials → 200, returns JWT
-5. `POST /api/auth/login` with wrong password → 401, generic error
-6. `POST /api/auth/login` with nonexistent email → 401, same generic error
-7. `GET /api/players` (a protected route, even though the controller doesn't exist yet) without token → 401
-8. `GET /actuator/health` without token → 200 (public)
-9. JWT token contains userId claim and expires after 24h
-
-Run these checks with curl or write a quick test. Fix any failures before declaring done.
+1. Open app → redirected to login → enter credentials → lands on dashboard
+2. Refresh page → still logged in (token persists)
+3. Click logout → redirected to login → cannot access other pages

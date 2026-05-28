@@ -13,6 +13,13 @@ management:
       exposure:
         include: health,info
 
+crick:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-32-bytes-min-1234567890}
+    expiration-ms: 86400000
+  auth:
+    registration-enabled: ${CRICK_REGISTRATION_ENABLED:true}
+
 ---
 spring:
   config:
@@ -54,3 +61,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+crick:
+  jwt:
+    secret: ${JWT_SECRET}
+  auth:
+    registration-enabled: ${CRICK_REGISTRATION_ENABLED:false}
