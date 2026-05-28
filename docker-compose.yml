@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: crick-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: crick
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-crick}
+    ports:
+      - "3306:3306"
+    volumes:
+      - crick-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  crick-mysql-data:
