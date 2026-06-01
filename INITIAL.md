@@ -1,8 +1,8 @@
-# Feature 3 Frontend: Session Logging
+# Feature 4 Frontend: Player Profile & Analytics Dashboard
 
 ## What to build
 
-The core coaching UX. A coach creates a session, picks who attended, then scores each player across technique dimensions. Must be fast enough to log 15 players in 10 minutes — speed is everything.
+An impressive, modern player profile page that is the analytical heart of the app. A coach opens a player and instantly understands their trajectory — what's improving, what's stagnating, where to focus. This page should feel like a premium sports analytics product, not a student project.
 
 This is frontend only. Backend endpoints already exist.
 
@@ -11,15 +11,12 @@ This is frontend only. Backend endpoints already exist.
 Read `CLAUDE.md` before writing any code.
 
 Backend endpoints available:
-- `POST /api/sessions` — create `{ date, title, notes }`
-- `GET /api/sessions?page=0&size=20` — paginated list with playerCount
-- `GET /api/sessions/{id}` — full detail with nested observations
-- `PUT /api/sessions/{id}/attendance` — `{ playerIds: [...] }`
-- `POST /api/sessions/{id}/observations` — bulk submit observations
-- `DELETE /api/sessions/{id}`
-- `GET /api/players` — existing player list
+- `GET /api/players/{id}` — player details (name, ageGroup, notes)
+- `GET /api/players/{id}/progress` — `{ playerId, playerName, ageGroup, trends: [{ sessionId, sessionDate, sessionTitle, scores: [{ category, dimension, score }] }] }`
+- `GET /api/players/{id}/observations?page=0&size=10` — paginated observation history with scores and notes
+- `GET /api/players` — player list (already built)
 
-Features 1–2 frontend complete: auth, player CRUD, TanStack Query patterns, axios client.
+Features 1–3 frontend complete: auth, players list, session logging.
 
 Categories and dimensions:
 - BATTING: stance, footwork, bat_path, timing, shot_selection
@@ -27,70 +24,99 @@ Categories and dimensions:
 - FIELDING: catching, throwing, positioning, agility
 - MATCH_AWARENESS: decision_making, communication, pressure_response
 
-Scores: 1–5 per dimension. Partial scoring is valid — coach only scores what they observed.
+## Design direction
+
+**Aesthetic: refined sports analytics — clean, data-dense, modern.** Think ESPN analytics meets a well-designed SaaS dashboard. Dark cards on a light background. Crisp typography. Deliberate use of colour to encode meaning (improving = green, declining = red, stable = neutral). Generous whitespace between sections but data-dense within each card.
+
+**Install any free charting library that gives the best result.** Recharts is already installed but feel free to also use or switch to Nivo (`@nivo/line`, `@nivo/radar`, `@nivo/heatmap`) or Chart.js (`react-chartjs-2`) if they produce more impressive visuals for specific chart types. Pick the best tool per chart.
+
+## Page layout (`src/pages/PlayerProfilePage.tsx`)
+
+Route: `/players/{id}`
+
+### Header section
+- Player name (large), age group badge, notes
+- Quick stats row: total sessions attended, average overall score (across all dimensions), sessions this month
+- Trend indicator next to average: ↑ improving / ↓ declining / → stable (compare last 3 sessions average vs previous 3)
+
+### Analytics section — show ALL of these
+
+**1. Dimension trend lines (line chart)**
+- One chart per category (Batting, Bowling, Fielding, Match Awareness) in a 2×2 grid
+- Each chart: X-axis = session dates, Y-axis = score 1–5
+- One coloured line per dimension within that category
+- Tooltip on hover showing session title, date, exact scores
+- If a category has no data across any sessions, hide that chart entirely
+
+**2. Radar/spider chart (overall snapshot)**
+- Single radar chart showing the player's LATEST scores across all dimensions
+- Overlay the average of all their historical scores as a second, fainter shape
+- This gives an instant "current form vs overall ability" view
+
+**3. Category averages over time (area or bar chart)**
+- One line/bar per category (4 total) showing the average score per category per session
+- This is the zoomed-out "how is batting vs bowling trending" view
+
+**4. Heatmap (score matrix)**
+- Rows = dimensions, Columns = sessions (by date)
+- Cell colour intensity = score (1 = light/cool, 5 = dark/warm)
+- Gives an instant visual pattern of where scores are consistently low or improving
+- Great for spotting patterns across many sessions at a glance
+
+**5. Strength & weakness summary cards**
+- Compute from latest 3 sessions:
+  - Top 3 strongest dimensions (highest average) with score and trend arrow
+  - Top 3 weakest dimensions (lowest average) with score and trend arrow
+- Display as compact cards with colour coding
+
+**6. Session-by-session observation log**
+- Below the charts section
+- Expandable accordion: each session shows date, title, scores grouped by category, overall notes
+- Paginated — load more on scroll or button
+- Reuse the `ScoreDisplay` component from Feature 3
+
+### Empty states
+- If player has 0 sessions: "No sessions recorded yet" with a link to create a new session
+- If player has 1 session: show what's available, hide trend charts that need 2+ data points
 
 ## Files to create
 
-### API functions (`src/api/sessions.ts`)
-- `getSessions(params)` — paginated list
-- `getSession(id)` — full detail
-- `createSession(data)` — POST
-- `setAttendance(sessionId, playerIds)` — PUT
-- `submitObservations(sessionId, observations)` — POST
-- `deleteSession(id)` — DELETE
-- Typed interfaces: `Session`, `SessionSummary`, `SessionDetail`, `Observation`, `ScoreEntry`
+### API functions (`src/api/playerProgress.ts`)
+- `getPlayerProgress(playerId)` — GET progress endpoint
+- `getPlayerObservations(playerId, page)` — GET paginated observations
+- Typed interfaces for the response shapes
 
-### Sessions list page (`src/pages/SessionsPage.tsx`)
-- List of sessions: date, title, player count
-- "New session" button
-- Click a session → navigate to session detail
-- Pagination
-- Empty state
+### Analytics components (create under `src/components/analytics/`)
+- `DimensionTrendChart.tsx` — line chart for one category's dimensions over time
+- `PlayerRadarChart.tsx` — radar chart with current vs historical overlay
+- `CategoryAveragesChart.tsx` — area/bar chart of category-level trends
+- `ScoreHeatmap.tsx` — heatmap grid of dimensions × sessions
+- `StrengthWeaknessCards.tsx` — computed top/bottom dimensions
+- `ObservationHistory.tsx` — paginated expandable session log
 
-### New session flow — this is a multi-step wizard, not separate pages
+Each component receives data as props — all computation (averages, trends, sorting) happens in the page or a utility function, not inside chart components.
 
-**Step 1: Create session (`src/pages/NewSessionPage.tsx`)**
-- Form: date (default today), title, optional notes
-- On submit: creates session via API, advances to step 2
+### Utility (`src/utils/scoreAnalytics.ts`)
+- Pure functions: `computeCategoryAverages(trends)`, `computeStrengthsWeaknesses(trends, lastN)`, `computeTrendDirection(scores)` (returns 'improving' | 'declining' | 'stable')
+- These are reusable for the parent view later
 
-**Step 2: Attendance**
-- Shows all players from coach's squad as a checkbox list grouped by age group
-- "Select all" / "Deselect all"
-- On submit: calls setAttendance, advances to step 3
+### Page
+- `PlayerProfilePage.tsx` — orchestrates everything above
 
-**Step 3: Observation logging — this is the critical UX**
-- Player tabs or sidebar list showing all attendees. Current player highlighted.
-- For the selected player, show scoring grid:
-  - Grouped by category (collapsible sections: Batting, Bowling, Fielding, Match Awareness)
-  - Each dimension: label + a row of 5 buttons (1-2-3-4-5). Tap to score. Tap again to deselect.
-  - Optional notes field per dimension (hidden by default, expand icon to reveal)
-  - Overall notes textarea at bottom
-- **Save per player in local state** — do not lose work when switching between players. Hold all observations in React state until final submit.
-- Visual indicator on player tab: green dot if scored, empty if not yet
-- "Submit all" button — sends entire observations payload to API in one call
-- After submit: redirect to session detail page
-
-### Session detail page (`src/pages/SessionDetailPage.tsx`)
-- Read-only view of the session
-- Session header: date, title, notes
-- Player list with expandable observation cards
-- Each card: player name, scores displayed as category → dimension → score, overall notes
-- Delete session button with confirmation
-
-### Reusable score display (`src/components/ScoreDisplay.tsx`)
-- Takes an array of scores, renders them grouped by category
-- Used in session detail and later in player profile (Feature 4)
+### Update routing and navigation
+- `/players/:id` route points to PlayerProfilePage
+- Player cards/rows in PlayersPage link to this page
+- Back button or breadcrumb to return to players list
 
 ## Constraints
 
-- Observation state lives in React state (useState/useReducer) until submit. One API call at the end, not per player.
-- Do not use localStorage or sessionStorage for observation drafts.
-- Player switching must be instant — no API calls when tabbing between players.
-- Categories the coach doesn't score are simply omitted from the payload. Don't send empty arrays.
-- TanStack Query for all fetching. Mutations with cache invalidation on sessions list.
-- Do not build player profile/progress charts — that's Feature 4.
-- Keep styling consistent with existing pages.
+- All data fetching via TanStack Query.
+- All score computation happens client-side from the progress endpoint data. Do not add new backend endpoints.
+- Charts must handle sparse data gracefully — not every player is scored on every dimension every session.
+- Responsive: charts stack vertically on mobile, 2-column grid on desktop.
+- Use real Tailwind styling — no inline style objects unless required by the charting library.
+- Do not add drill recommendations to this page — that's Feature 6.
 
 ## Verify
 
-1. Create session → select players → score a few dimensions per player → switch between players without losing data → submit → session detail shows all observations correctly
+1. Open a player with 3+ sessions of observation data → all charts render with correct data, strengths/weaknesses show, observation history expands
