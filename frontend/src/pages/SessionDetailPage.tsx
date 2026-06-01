@@ -6,14 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import ScoreDisplay from '../components/ScoreDisplay';
 import { deleteSession, getSession } from '../api/sessions';
 import type { SessionDetail } from '../api/sessions';
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
+import { formatDate } from '../utils/format';
 
 export default function SessionDetailPage() {
   const params = useParams<{ id: string }>();

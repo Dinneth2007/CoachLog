@@ -3,16 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getSessions } from '../api/sessions';
 import type { SessionSummary } from '../api/sessions';
+import { formatDate } from '../utils/format';
 
 const PAGE_SIZE = 20;
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 export default function SessionsPage() {
   const navigate = useNavigate();

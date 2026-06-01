@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import PlayerFormModal from '../components/PlayerFormModal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -18,6 +19,7 @@ function useDebounced<T>(value: T, delay: number): T {
 
 export default function PlayersPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounced(searchInput.trim(), 300);
   const [ageFilter, setAgeFilter] = useState<AgeGroup | ''>('');
@@ -150,6 +152,7 @@ export default function PlayersPage() {
               <PlayerCard
                 key={p.id}
                 player={p}
+                onOpen={() => navigate(`/players/${p.id}`)}
                 onEdit={() => openEdit(p)}
                 onDelete={() => setDeleting(p)}
               />
@@ -206,10 +209,12 @@ export default function PlayersPage() {
 
 function PlayerCard({
   player,
+  onOpen,
   onEdit,
   onDelete,
 }: {
   player: Player;
+  onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -217,35 +222,56 @@ function PlayerCard({
     <div
       role="button"
       tabIndex={0}
-      onClick={onEdit}
+      onClick={onOpen}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onEdit();
+          onOpen();
         }
       }}
       className="group relative bg-white border border-slate-200 rounded-xl p-5 text-left cursor-pointer transition-all hover:border-slate-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        aria-label={`Remove ${player.name}`}
-        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus:opacity-100 text-slate-400 hover:text-red-600 rounded-md p-1 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-1"
-      >
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
-          <path
-            d="M6 4h8M4 7h12M7 7v8m6-8v8M5 7l1 10h8l1-10"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      <div className="pr-6">
+      <div className="absolute top-3 right-3 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          aria-label={`Edit ${player.name}`}
+          className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-slate-400 hover:text-slate-700 rounded-md p-1 transition-opacity focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1"
+        >
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
+            <path
+              d="M14 4l2 2-9 9H5v-2l9-9zM12 6l2 2"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          aria-label={`Remove ${player.name}`}
+          className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-slate-400 hover:text-red-600 rounded-md p-1 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-1"
+        >
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
+            <path
+              d="M6 4h8M4 7h12M7 7v8m6-8v8M5 7l1 10h8l1-10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <div className="pr-14">
         <h3 className="font-medium text-slate-900 truncate">{player.name}</h3>
       </div>
       <span

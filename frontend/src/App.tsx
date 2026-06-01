@@ -6,6 +6,7 @@ import { AuthProvider } from './hooks/useAuth';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import PlayersPage from './pages/PlayersPage';
+import PlayerProfilePage from './pages/PlayerProfilePage';
 import SessionsPage from './pages/SessionsPage';
 import NewSessionPage from './pages/NewSessionPage';
 import SessionDetailPage from './pages/SessionDetailPage';
@@ -27,6 +28,7 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/players" element={<PlayersPage />} />
+                <Route path="/players/:id" element={<PlayerProfilePage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/sessions/new" element={<NewSessionPage />} />
                 <Route path="/sessions/:id" element={<SessionDetailPage />} />
