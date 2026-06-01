@@ -1,5 +1,7 @@
 package com.crick.player;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     Optional<Player> findByIdAndCoachId(Long id, Long coachId);
+
+    List<Player> findAllByIdInAndCoachId(Collection<Long> ids, Long coachId);
 
     @Query("""
             SELECT p FROM Player p
