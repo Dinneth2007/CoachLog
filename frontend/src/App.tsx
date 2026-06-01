@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import PlayersPage from './pages/PlayersPage';
 import SessionsPage from './pages/SessionsPage';
+import NewSessionPage from './pages/NewSessionPage';
+import SessionDetailPage from './pages/SessionDetailPage';
 import DrillsPage from './pages/DrillsPage';
 import ParentViewPage from './pages/ParentViewPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -26,6 +28,8 @@ export default function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/players" element={<PlayersPage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
+                <Route path="/sessions/new" element={<NewSessionPage />} />
+                <Route path="/sessions/:id" element={<SessionDetailPage />} />
                 <Route path="/drills" element={<DrillsPage />} />
               </Route>
             </Route>
