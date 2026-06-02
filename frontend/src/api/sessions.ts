@@ -35,6 +35,20 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   MATCH_AWARENESS: 'Match Awareness',
 };
 
+export const CATEGORY_HEX: Record<Category, string> = {
+  BATTING: '#0284c7',
+  BOWLING: '#059669',
+  FIELDING: '#d97706',
+  MATCH_AWARENESS: '#e11d48',
+};
+
+export const CATEGORY_CHIP_CLASSES: Record<Category, string> = {
+  BATTING: 'bg-sky-50 text-sky-700 ring-sky-200',
+  BOWLING: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  FIELDING: 'bg-amber-50 text-amber-800 ring-amber-200',
+  MATCH_AWARENESS: 'bg-rose-50 text-rose-700 ring-rose-200',
+};
+
 function toLabel(dim: string): string {
   const spaced = dim.replace(/_/g, ' ');
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);

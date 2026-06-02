@@ -9,3 +9,4 @@ public record CreateSessionRequest(
         @NotNull LocalDate date,
         @NotBlank @Size(max = 100) String title,
         @Size(max = 500) String notes) {}
+

@@ -8,16 +8,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { CATEGORY_LABELS } from '../../api/sessions';
+import { CATEGORY_HEX, CATEGORY_LABELS } from '../../api/sessions';
 import type { Category } from '../../api/sessions';
 import type { CategoryAverageRow } from '../../utils/scoreAnalytics';
 
-const CATEGORY_COLORS: Record<Category, string> = {
-  BATTING: '#0284c7',
-  BOWLING: '#059669',
-  FIELDING: '#d97706',
-  MATCH_AWARENESS: '#e11d48',
-};
+const CATEGORY_COLORS = CATEGORY_HEX;
 
 interface Props {
   data: CategoryAverageRow[];

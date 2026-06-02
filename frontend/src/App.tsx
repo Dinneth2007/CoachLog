@@ -11,6 +11,7 @@ import SessionsPage from './pages/SessionsPage';
 import NewSessionPage from './pages/NewSessionPage';
 import SessionDetailPage from './pages/SessionDetailPage';
 import DrillsPage from './pages/DrillsPage';
+import DrillDetailPage from './pages/DrillDetailPage';
 import ParentViewPage from './pages/ParentViewPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="/sessions/new" element={<NewSessionPage />} />
                 <Route path="/sessions/:id" element={<SessionDetailPage />} />
                 <Route path="/drills" element={<DrillsPage />} />
+                <Route path="/drills/:id" element={<DrillDetailPage />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFoundPage />} />
