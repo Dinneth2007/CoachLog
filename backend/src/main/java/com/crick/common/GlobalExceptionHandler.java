@@ -1,6 +1,7 @@
 package com.crick.common;
 
 import com.crick.auth.AuthService;
+import com.crick.embedding.AiException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +46,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(AiException.class)
+    public ResponseEntity<ErrorResponse> handleAi(AiException ex) {
+        log.warn("AI request failed", ex);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(new ErrorResponse(ex.getMessage(), null));
     }
 
