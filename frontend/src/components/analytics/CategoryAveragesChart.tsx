@@ -53,9 +53,9 @@ export default function CategoryAveragesChart({ data, categoriesPresent }: Props
               border: '1px solid #e2e8f0',
               fontSize: 12,
             }}
-            formatter={(value: number, name: string) => [
-              `${value.toFixed(1)} / 5`,
-              CATEGORY_LABELS[name as Category] ?? name,
+            formatter={(value, name) => [
+              `${Number(value).toFixed(1)} / 5`,
+              CATEGORY_LABELS[String(name) as Category] ?? String(name),
             ]}
           />
           <Legend

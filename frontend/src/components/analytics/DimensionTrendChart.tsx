@@ -47,7 +47,7 @@ export default function DimensionTrendChart({ data, dimensions }: Props) {
               fontSize: 12,
             }}
             labelStyle={{ color: '#0f172a', fontWeight: 500 }}
-            formatter={(value: number, name: string) => [`${value} / 5`, DIMENSION_LABELS[name as Dimension] ?? name]}
+            formatter={(value, name) => [`${Number(value)} / 5`, DIMENSION_LABELS[String(name) as Dimension] ?? String(name)]}
           />
           <Legend
             wrapperStyle={{ fontSize: 11, paddingTop: 6 }}

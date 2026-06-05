@@ -42,7 +42,7 @@ export default function PlayerRadarChart({ points, missingInLatest }: Props) {
                 border: '1px solid #e2e8f0',
                 fontSize: 12,
               }}
-              formatter={(value: number, name: string) => [`${value.toFixed(1)} / 5`, name === 'current' ? 'Latest' : 'Historical avg']}
+              formatter={(value, name) => [`${Number(value).toFixed(1)} / 5`, name === 'current' ? 'Latest' : 'Historical avg']}
             />
             <Radar
               dataKey="average"
