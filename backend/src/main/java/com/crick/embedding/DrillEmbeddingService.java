@@ -31,4 +31,5 @@ public class DrillEmbeddingService {
                 + ". Difficulty: " + drill.getDifficulty()
                 + ". " + drill.getName() + " — " + drill.getDescription();
     }
+
 }

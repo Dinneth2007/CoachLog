@@ -50,6 +50,19 @@ public class LlmService {
     private final ObjectMapper objectMapper;
 
     public List<LlmDrillRecommendation> generateRecommendations(String playerSummary, List<DrillMatch> retrieved) {
+        String content = chat(SYSTEM_PROMPT, buildUserMessage(playerSummary, retrieved));
+        try {
+            return objectMapper.readValue(stripFences(content), new TypeReference<List<LlmDrillRecommendation>>() {});
+        } catch (Exception e) {
+            throw new AiException("Failed to parse AI response", e);
+        }
+    }
+
+    public String complete(String systemPrompt, String userMessage) {
+        return chat(systemPrompt, userMessage);
+    }
+
+    private String chat(String systemPrompt, String userMessage) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(aiConfig.getChatApiKey());
@@ -57,11 +70,10 @@ public class LlmService {
         var body = java.util.Map.of(
                 "model", aiConfig.getChatModel(),
                 "messages", List.of(
-                        java.util.Map.of("role", "system", "content", SYSTEM_PROMPT),
-                        java.util.Map.of("role", "user", "content", buildUserMessage(playerSummary, retrieved))),
+                        java.util.Map.of("role", "system", "content", systemPrompt),
+                        java.util.Map.of("role", "user", "content", userMessage)),
                 "temperature", 0.3);
 
-        String content;
         try {
             ResponseEntity<DeepSeekResponse> response = aiRestTemplate.exchange(
                     aiConfig.getChatApiUrl(), HttpMethod.POST,
@@ -71,15 +83,9 @@ public class LlmService {
                     || parsed.choices().get(0).message() == null) {
                 throw new AiException("AI chat returned no choices");
             }
-            content = parsed.choices().get(0).message().content();
+            return parsed.choices().get(0).message().content();
         } catch (RestClientException e) {
             throw new AiException("AI chat request failed", e);
-        }
-
-        try {
-            return objectMapper.readValue(stripFences(content), new TypeReference<List<LlmDrillRecommendation>>() {});
-        } catch (Exception e) {
-            throw new AiException("Failed to parse AI response", e);
         }
     }
 
