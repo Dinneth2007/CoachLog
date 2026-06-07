@@ -15,6 +15,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     List<Player> findAllByIdInAndCoachId(Collection<Long> ids, Long coachId);
 
+    long countByCoachId(Long coachId);
+
     @Query("""
             SELECT p FROM Player p
             WHERE p.coach.id = :coachId

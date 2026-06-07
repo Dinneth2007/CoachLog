@@ -1,5 +1,6 @@
 package com.crick.session;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,10 @@ import org.springframework.data.repository.query.Param;
 public interface SessionRepository extends JpaRepository<Session, Long> {
 
     Optional<Session> findByIdAndCoachId(Long id, Long coachId);
+
+    long countByCoachId(Long coachId);
+
+    long countByCoachIdAndDateBetween(Long coachId, LocalDate start, LocalDate end);
 
     @Query("""
             SELECT s FROM Session s

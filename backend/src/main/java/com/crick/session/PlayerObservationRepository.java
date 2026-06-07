@@ -47,4 +47,14 @@ public interface PlayerObservationRepository extends JpaRepository<PlayerObserva
             WHERE o.id IN :ids
             """)
     List<PlayerObservation> findWithScoresByIdIn(@Param("ids") Collection<Long> ids);
+
+    @Query("""
+            SELECT DISTINCT o FROM PlayerObservation o
+            LEFT JOIN FETCH o.scores
+            JOIN FETCH o.player p
+            JOIN FETCH o.session s
+            WHERE p.coach.id = :coachId
+            ORDER BY p.id ASC, s.date ASC, o.id ASC
+            """)
+    List<PlayerObservation> findByCoachIdWithScoresAndSession(@Param("coachId") Long coachId);
 }
