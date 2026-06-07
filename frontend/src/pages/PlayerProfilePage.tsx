@@ -9,6 +9,7 @@ import ScoreHeatmap from '../components/analytics/ScoreHeatmap';
 import StrengthWeaknessCards from '../components/analytics/StrengthWeaknessCards';
 import ObservationHistory from '../components/analytics/ObservationHistory';
 import RecommendationSection from '../components/RecommendationSection';
+import ParentLinkSection from '../components/ParentLinkSection';
 import { AGE_GROUP_CHIP_CLASSES, getPlayer } from '../api/players';
 import {
   CATEGORY_LABELS,
@@ -250,6 +251,8 @@ export default function PlayerProfilePage() {
       )}
 
       <RecommendationSection playerId={idNum} />
+
+      <ParentLinkSection playerId={idNum} />
     </div>
   );
 }
