@@ -1,0 +1,13 @@
+# Keep the build context small and never leak local files/secrets into the image.
+target/
+.git/
+.gitignore
+.env
+.env.*
+*.log
+.idea/
+*.iml
+.vscode/
+seed_demo.py
+seed_demo.sql
+HELP.md
